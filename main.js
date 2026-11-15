@@ -11,7 +11,6 @@ let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 
-// Variables de juego
 let currentWeapon = 1;
 let isGameOver = false;
 let isVictory = false;
@@ -22,7 +21,7 @@ const ammo = {
 };
 const zombies = [];
 const dyingZombies = [];
-const obstacles = []; // Lista de cajas de colisión (THREE.Box3)
+const obstacles = []; 
 let ammoBox = null;
 let extractionZone = null;
 
@@ -31,9 +30,6 @@ const raycaster = new THREE.Raycaster();
 init();
 animate();
 
-// ==========================================
-// GENERADOR DE TEXTURAS PROCEDIMENTALES
-// ==========================================
 function createGridTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
@@ -61,7 +57,6 @@ function createWallTexture() {
     ctx.strokeStyle = '#2b2b2b';
     ctx.lineWidth = 6;
     ctx.strokeRect(0, 0, 256, 256);
-    // Efecto de concreto rugoso
     for (let i = 0; i < 500; i++) {
         ctx.fillStyle = Math.random() > 0.5 ? '#3a3a3a' : '#5a5a5a';
         ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3);
@@ -79,23 +74,19 @@ function createMetalDoorTexture() {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Base de acero industrial
     ctx.fillStyle = '#3a4248';
     ctx.fillRect(0, 0, 512, 512);
 
-    // Vetas metálicas horizontales sutiles
     for (let i = 0; i < 600; i++) {
         ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.06)';
         ctx.fillRect(Math.random() * 512, Math.random() * 512, 40, 2);
     }
 
-    // Paneles embutidos en ambas hojas
     ctx.strokeStyle = '#23282c';
     ctx.lineWidth = 8;
     ctx.strokeRect(24, 24, 216, 410);
     ctx.strokeRect(272, 24, 216, 410);
 
-    // Franja inferior de precaución (amarillo y negro)
     ctx.fillStyle = '#d4a017';
     ctx.fillRect(0, 456, 512, 56);
     ctx.fillStyle = '#181a1b';
@@ -109,11 +100,9 @@ function createMetalDoorTexture() {
         ctx.fill();
     }
 
-    // Línea divisoria central de doble hoja
     ctx.fillStyle = '#14171a';
     ctx.fillRect(252, 0, 8, 512);
 
-    // Remaches metálicos
     ctx.fillStyle = '#68737d';
     for (let y = 36; y <= 430; y += 65) {
         ctx.fillRect(14, y, 5, 5);
@@ -148,7 +137,6 @@ function createSignTexture(text, bgColor, accentColor) {
 }
 
 function init() {
-    // 1. Escena y Cámara
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0d0d0d);
     scene.fog = new THREE.FogExp2(0x0d0d0d, 0.04);
@@ -156,7 +144,6 @@ function init() {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 1.6, 5);
 
-    // 2. Controles de Primera Persona
     controls = new PointerLockControls(camera, document.body);
 
     const blocker = document.getElementById('blocker');
@@ -174,7 +161,6 @@ function init() {
 
     scene.add(controls.getObject());
 
-    // 3. Listeners de Teclado y Mouse
     const onKeyDown = (event) => {
         if (isGameOver || isVictory) return;
         switch (event.code) {
@@ -206,7 +192,6 @@ function init() {
         }
     });
 
-    // 4. Iluminación profesional
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
@@ -214,14 +199,13 @@ function init() {
     directionalLight.position.set(10, 30, 10);
     scene.add(directionalLight);
 
-    // 5. Escenario Base Cerrado (RF03)
     const floorMaterial = new THREE.MeshStandardMaterial({
         map: createGridTexture(),
         roughness: 0.6
     });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 84), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(0, 0, -26); // Cubre desde z = +16 hasta z = -68
+    floor.position.set(0, 0, -26); 
     scene.add(floor);
 
     const wallMaterial = new THREE.MeshStandardMaterial({
@@ -229,7 +213,6 @@ function init() {
         roughness: 0.8
     });
 
-    // Muros laterales del corredor (de z = +15 a z = -67)
     const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(2, 6, 82), wallMaterial);
     wallLeft.position.set(-10, 3, -26);
     scene.add(wallLeft);
@@ -238,7 +221,6 @@ function init() {
     wallRight.position.set(10, 3, -26);
     scene.add(wallRight);
 
-    // Muro frontal (cierre inicial detrás del jugador en z = +14 con vano central)
     const wallFrontLeft = new THREE.Mesh(new THREE.BoxGeometry(7.9, 6, 2), wallMaterial);
     wallFrontLeft.position.set(-6.05, 3, 14);
     scene.add(wallFrontLeft);
@@ -251,7 +233,6 @@ function init() {
     wallFrontTop.position.set(0, 4.9, 14);
     scene.add(wallFrontTop);
 
-    // Muro trasero (cierre final en z = -66 con vano central para la salida)
     const wallBackLeft = new THREE.Mesh(new THREE.BoxGeometry(7.9, 6, 2), wallMaterial);
     wallBackLeft.position.set(-6.05, 3, -66);
     scene.add(wallBackLeft);
@@ -264,7 +245,6 @@ function init() {
     wallBackTop.position.set(0, 4.9, -66);
     scene.add(wallBackTop);
 
-    // Materiales compartidos para ambas puertas industriales
     const frameMaterial = new THREE.MeshStandardMaterial({
         color: 0x1e2226,
         metalness: 0.85,
@@ -281,9 +261,6 @@ function init() {
         roughness: 0.4
     });
 
-    // ==========================================
-    // PUERTA METÁLICA INICIAL (Cierre de Inicio)
-    // ==========================================
     const startDoorGroup = new THREE.Group();
     startDoorGroup.position.set(0, 0, 13.5);
 
@@ -328,9 +305,6 @@ function init() {
 
     scene.add(startDoorGroup);
 
-    // ==========================================
-    // PUERTA METÁLICA DE EXTRACCIÓN (RF08)
-    // ==========================================
     extractionZone = new THREE.Group();
     extractionZone.position.set(0, 0, -65.5);
 
@@ -376,12 +350,8 @@ function init() {
     extractionZone.userData = { exitLight };
     scene.add(extractionZone);
 
-    // ==========================================
-    // 6. CARGA DE MODELOS GLB (Armas, Munición, Obstáculos y Zombis)
-    // ==========================================
     const gltfLoader = new GLTFLoader();
 
-    // Arma 1: ARX-160
     gltfLoader.load('arx-160_weapon.glb', (gltf) => {
         const weapon1 = gltf.scene;
         weapon1.scale.set(0.012, 0.012, 0.012);
@@ -393,7 +363,6 @@ function init() {
         updateHUD();
     });
 
-    // Arma 2: AK-47 (Conserva tus valores calibrados de scale y position si ya los ajustaste)
     gltfLoader.load('ak47_weapon.glb', (gltf) => {
         const weapon2 = gltf.scene;
         weapon2.scale.set(0.6141, 0.6141, 0.6141);
@@ -405,11 +374,9 @@ function init() {
         weapons[2] = weapon2;
     });
 
-    // Objeto Coleccionable: Caja de Munición (`caja_de_municion.glb`) (RF02, RF10)
     gltfLoader.load('caja_de_municion.glb', (gltf) => {
         const rawAmmo = gltf.scene;
 
-        // Medir solo las mallas visibles para normalizar su tamaño a ~0.85 m
         const box = new THREE.Box3();
         rawAmmo.traverse((child) => {
             if (child.isMesh) {
@@ -422,7 +389,6 @@ function init() {
         const maxDim = Math.max(size.x, size.y, size.z) || 1;
         const targetScale = 0.85 / maxDim;
 
-        // Centrar el modelo en su propio origen para que rote limpio sobre su eje
         rawAmmo.position.sub(center);
 
         ammoBox = new THREE.Group();
@@ -430,7 +396,6 @@ function init() {
         ammoBox.scale.setScalar(targetScale);
         ammoBox.position.set(-4, 0.45, -30);
 
-        // Destello ámbar sutil para que destaque entre la niebla
         const ammoLight = new THREE.PointLight(0xffaa00, 1.5, 6);
         ammoLight.position.set(0, 0.6, 0);
         ammoBox.add(ammoLight);
@@ -445,7 +410,6 @@ function init() {
         scene.add(ammoBox);
     });
 
-    // Obstáculos 3D: Cajas y Barriles (`crates_barrels.glb`) con colisión por malla (RF03, RF11)
     gltfLoader.load('crates_barrels.glb', (gltf) => {
         const obstaclePositions = [
             { x: -4, z: -15, rotY: 0 },
@@ -463,14 +427,12 @@ function init() {
             obstacleInstance.position.set(pos.x, 0, pos.z);
             obstacleInstance.updateMatrixWorld(true);
 
-            // Nivelar exactamente sobre el suelo (y = 0)
             const groupBox = new THREE.Box3().setFromObject(obstacleInstance);
             obstacleInstance.position.y = -groupBox.min.y;
             obstacleInstance.updateMatrixWorld(true);
 
             scene.add(obstacleInstance);
 
-            // Generar una caja de colisión ajustada por cada barril o caja del modelo
             obstacleInstance.traverse((child) => {
                 if (child.isMesh) {
                     obstacles.push(new THREE.Box3().setFromObject(child));
@@ -481,7 +443,6 @@ function init() {
         console.warn("No se pudo cargar crates_barrels.glb:", error);
     });
 
-    // Zombis distribuidos (RF04, RF05)
     gltfLoader.load('zombie.glb', (gltf) => {
         const zombieCoords = [
             { x: 0, z: -12 },
@@ -509,9 +470,6 @@ function init() {
     window.addEventListener('resize', onWindowResize);
 }
 
-// ==========================================
-// SISTEMA DE DISPARO Y COLISIONES DE RAYCAST (RF07)
-// ==========================================
 function shoot() {
     if (ammo[currentWeapon] <= 0) return;
 
@@ -585,7 +543,6 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Bucle principal con Gestión de Colisiones del Entorno
 function animate() {
     requestAnimationFrame(animate);
 
@@ -605,19 +562,14 @@ function animate() {
         if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
         if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
 
-        // Guardar posición anterior para colisiones
         const prevPosX = camera.position.x;
         const prevPosZ = camera.position.z;
 
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
 
-        // ==========================================
-        // SISTEMA DE COLISIONES JUGADOR VS ENTORNO
-        // ==========================================
         const playerRadius = 0.5;
 
-        // 1. Colisión con Muros Laterales, Puerta Inicial y Puerta de Salida
         if (camera.position.x < -8.5 || camera.position.x > 8.5) {
             camera.position.x = prevPosX;
         }
@@ -625,7 +577,6 @@ function animate() {
             camera.position.z = prevPosZ;
         }
 
-        // 2. Colisión con Obstáculos 3D (Cajas y Barriles)
         const playerBox = new THREE.Box3(
             new THREE.Vector3(camera.position.x - playerRadius, 0, camera.position.z - playerRadius),
             new THREE.Vector3(camera.position.x + playerRadius, 3, camera.position.z + playerRadius)
@@ -640,20 +591,17 @@ function animate() {
         }
     }
 
-    // Comprobar llegada a la Puerta Metálica de Extracción (RF08)
     if (extractionZone) {
         const { exitLight } = extractionZone.userData;
         if (exitLight) {
             exitLight.intensity = 2.4 + Math.sin(time * 0.005) * 0.6;
         }
 
-        // Activar victoria al pisar el umbral frente a la puerta de salida
         if (camera.position.z <= -63.2 && Math.abs(camera.position.x) <= 2.3) {
             triggerVictory();
         }
     }
 
-    // Recolección de Munición (RF02, RF10)
     if (ammoBox) {
         ammoBox.rotation.y += delta * 1.5;
         ammoBox.position.y = 0.45 + Math.sin(time * 0.003) * 0.08;
@@ -667,7 +615,6 @@ function animate() {
         }
     }
 
-    // IA, Persecución y Colisión con Zombis (RF05, RF09)
     const detectionRange = 14;
     const zombieSpeed = 2.0;
     const attackRange = 1.3;
@@ -693,7 +640,6 @@ function animate() {
         }
     }
 
-    // Animación de caída de zombis abatidos
     for (let i = dyingZombies.length - 1; i >= 0; i--) {
         const item = dyingZombies[i];
         item.progress += delta * 3;
