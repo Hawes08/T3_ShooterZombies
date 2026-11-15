@@ -1,0 +1,22 @@
+--Instrucciones--
+
+Para poder ejecutar el código de manera adecuada debe primero, asegurarse que todos los archivos se encuentren en la carpeta.
+
+Archivos:
+ak47_weapon.glb
+arx-160_weapon.glb
+caja_de_municion.glb
+crate_barrels.glb
+index
+main.js
+zombie.glb
+
+Además, debe de tener como programa el Visual Studio Code junto a la extensión "Live Server".
+
+Al tener todo ello listo, deberá hacer lo siguiente:
+
+- Ingresar al Visual Studio Code.
+- Dirigirse a "File --> Open Folder" y seleccionar la carpeta donde se encuentras los archivos.
+- Por último, darle click derecho al archivo "index.html" y seleccionar "Open with Live Server".
+
+Listo, esos son los pasos para logar hacer funcionar el programa.
